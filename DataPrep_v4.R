@@ -72,12 +72,12 @@ rule_df <- function(rulez){
 
 # Read inputs -------------------------------------------------------------
 
-grades_v4 <- read.csv("C:/Users/arul.m.seetharaman/Desktop/Data/OneDrive_1_4-20-2018/Grades.v3.csv")
-students_v4 <- read.csv("C:/Users/arul.m.seetharaman/Desktop/Data/OneDrive_1_4-20-2018/STUDENT_v3.csv")
+grades_v4 <- read.csv("FilePath")
+students_v4 <- read.csv("FilePath")
 
 # Master student profile --------------------------------------------------
 
-csc_students <- students_v4 %>% select(-c(CATALOG_TERM_CODE,ADMISSION_TYPE_DESC,CITIZENSHIP_DESC,SOONER_ID,COLLEGE_DESC,DEPARTMENT_DESC,MINOR_DESC)) %>% 
+csc_students <- students_v4 %>% select(-c(CATALOG_TERM_CODE,ADMISSION_TYPE_DESC,CITIZENSHIP_DESC,S_ID,COLLEGE_DESC,DEPARTMENT_DESC,MINOR_DESC)) %>% 
   filter(DEGREE_CODE == "BSCS", MAJOR_DESC == "Computer Science") %>% 
   select(-c(DEGREE_CODE,MAJOR_DESC)) %>% 
   group_by(PERSON_UID,TERM_CODE) %>% 
@@ -98,8 +98,8 @@ csc_stud_grades <- left_join(csc_students,grades_v4[,-2], by = c("PERSON_UID" = 
 
 sapply(csc_stud_grades, function(y) sum(length(which(is.na(y)))))
 
-#Convert factors to characters,Replcae spaces and NA's with UNK, OU_TERM_UG_GPA
-csc_stud_grades <- csc_stud_grades %>% filter(!(is.na(OU_RETN_UG_GR_GPA))) %>% 
+#Convert factors to characters,Replcae spaces and NA's with UNK, TERM_UG_GPA
+csc_stud_grades <- csc_stud_grades %>% filter(!(is.na(RETN_UG_GR_GPA))) %>% 
   mutate(COURSE_REFERENCE_NUMBER = as.numeric(as.character(COURSE_REFERENCE_NUMBER)),
          SUBJECT_CODE            = gsub(" ","",SUBJECT_CODE),
          COURSE_NUMBER           = as.numeric(gsub(" ","",COURSE_NUMBER))  ,
@@ -110,7 +110,7 @@ csc_stud_grades <- csc_stud_grades %>% filter(!(is.na(OU_RETN_UG_GR_GPA))) %>%
          FINAL_GRADE                 =    ifelse( is.na(FINAL_GRADE),              "UNK",FINAL_GRADE),
          COURSE_NUMBER               =    ifelse( is.na(COURSE_NUMBER),             0  ,COURSE_NUMBER),
          COURSE_HOURS_ATTEMPTED      =    ifelse( is.na(COURSE_HOURS_ATTEMPTED),    0  ,COURSE_HOURS_ATTEMPTED),
-         OU_TERM_UG_GPA              =    ifelse( is.na(OU_TERM_UG_GPA),            0  ,OU_TERM_UG_GPA),
+         TERM_UG_GPA                 =    ifelse( is.na(TERM_UG_GPA),            0  ,TERM_UG_GPA),
          FULL_COURSE                 =    gsub(" ","",paste0(SUBJECT_CODE,COURSE_NUMBER))
          ) %>% 
   mutate(FINAL_GRADE                 =    ifelse( FINAL_GRADE == "",              "UNK",FINAL_GRADE)) %>% 
@@ -120,7 +120,7 @@ csc_stud_grades <- csc_stud_grades[,c(1,2,13,14,4,11,15,26,3,16:20,25,5,7,6,8,9,
 
 # Feature Engineering -----------------------------------------------------
 
-#csc_master <- csc_stud_grades  %>% select(-c(SOONER_ID)) %>% 
+#csc_master <- csc_stud_grades  %>% select(-c(S_ID)) %>% 
 G <- c("A","B","C","D")
 csc_new_feats <-   csc_stud_grades  %>% 
 filter(inrange(TERM_CODE, (201710-400),201620)) %>%
@@ -217,7 +217,7 @@ csc_clusSumry <- csc_halfProfile %>% group_by(cluster) %>%
   summarise(honors_count               = sum(HONORS_IND),
             no_courses_wdraw           = sum(withdraw_count),
             transfer_count             = sum(transfer_student),
-            clust_mean_gpa             = mean(OU_RETN_UG_GR_GPA),
+            clust_mean_gpa             = mean(RETN_UG_GR_GPA),
             clust_mean_no_courses      = mean(total_No_courses),
             count                      = n()
   )
@@ -323,14 +323,14 @@ Kmean_Sumry <- csc_kmeans_half %>% group_by(cluster) %>%
   summarise(honors_count               = sum(HONORS_IND),
             no_courses_wdraw           = sum(withdraw_count),
             transfer_count             = sum(transfer_student),
-            clust_mean_GPAhours        = mean(OU_RETN_UG_GR_GPA_HOURS),
-            clust_mean_gpa             = mean(OU_RETN_UG_GR_GPA),
+            clust_mean_GPAhours        = mean(RETN_UG_GR_GPA_HOURS),
+            clust_mean_gpa             = mean(RETN_UG_GR_GPA),
             clust_mean_no_courses      = mean(total_No_courses),
             count                      = n()
   )
 
 # Preparing DF for Transaction --------------------------------------------------
- sid   <- 31541751
+ sid   <- 000000008
 # clust <- csc_halfProfile$cluster[which(csc_halfProfile$PERSON_UID == sid)]
 
 csc_sparse <- csc_spread17 %>% 
@@ -427,7 +427,7 @@ cat(jason_unq)
 #Api Call
 r2 <-plumber::plumb("api_call.R")
 r2$run()
-# Retrieve Sooner ids for returned students
+# Retrieve student ids for returned students
 
-students3$SOONER_ID[students3$PERSON_UID == 638816993]
-students3$SOONER_ID[students3$PERSON_UID == 2856906438]
+students3$S_ID[students3$PERSON_UID == 0000000001]
+students3$S_ID[students3$PERSON_UID == 0000000008]
